@@ -1,11 +1,13 @@
 from flask import Flask, request, abort, jsonify, Response, make_response
 from math import floor
+import sqlite3
 
 app = Flask(__name__)
 
 
-# base string to be used in base62 encoding
-base = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+## base64 encoder-decoder logic
+
+base = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' # base string to be used in base62 encoding
 
 def convert_to_base62(number, b = 62):
     if b <= 0 or b > 62:
@@ -31,6 +33,24 @@ def convert_to_base10(number, b = 62):
     
     return res
 
+## database logic
+
+# create table
+create_table = """
+        CREATE TABLE URLS(
+        ID INT PRIMARY KEY ,
+        URL TEXT NOT NULL
+        );
+        """
+
+with sqlite3.connect('url_store.db') as conn:
+    cursor = conn.cursor()
+    try:
+        cursor.execute(create_table)
+    except sqlite3.Error as e:
+        print(e)
+    
+            
 
 
 
