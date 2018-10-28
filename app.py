@@ -1,6 +1,11 @@
 from flask import Flask, request, abort, jsonify, Response, make_response
 from math import floor
+import json
 import sqlite3
+
+def response_error(message, error=None, error_code=None):
+    response = json.dumps({'status': 'fail', 'message': message, 'error': error, 'error_code': error_code})
+    return make_response(response, 400)
 
 app = Flask(__name__)
 
@@ -39,7 +44,11 @@ def convert_to_base10(number, b = 62):
 create_table = """
         CREATE TABLE URLS(
         ID INT PRIMARY KEY ,
-        URL TEXT NOT NULL
+        URL TEXT NOT NULL,
+        SHORT_NAME TEXT NOT NULL,
+        IP_ADDRESS CHARS(50),
+        DEVICE_TYPE TEXT(50),
+        VISITS INT
         );
         """
 
@@ -49,7 +58,9 @@ with sqlite3.connect('url_store.db') as conn:
         cursor.execute(create_table)
     except sqlite3.Error as e:
         print(e)
-    
+
+
+
             
 
 
