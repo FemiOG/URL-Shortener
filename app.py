@@ -8,6 +8,10 @@ def response_error(message, error=None, error_code=None):
     response = json.dumps({'status': 'fail', 'message': message, 'error': error, 'error_code': error_code})
     return make_response(response, 400)
 
+def response_ok(data):
+   response = jsonify({'status': 'success', 'data': data}, 200)
+   return make_response(response)
+
 app = Flask(__name__)
 
 
@@ -56,14 +60,18 @@ def create_database():
 ## API logic
 @app.route('/', methods=['POST'])
 def encode_url():
-    create_database()
+    
+    # create_database()
     url = request.form.get('url')
+    if url == None:
+        return response_error("Please enter a URL",error="No URL given", error_code=400)
     suggested_short_name = request.form.get('suggested_short_name')
     print (validators.url(url))
 
     if validators.url(url):
         with sqlite3.connect('url_store.db') as conn:
             cursor = conn.cursor()
+            short_name = None
             try:
                 res = cursor.execute(
                 "INSERT INTO URLS (URL,VISITS) VALUES (?,?);",
@@ -74,13 +82,12 @@ def encode_url():
                     cursor.execute(
                         "SELECT URL FROM URLS WHERE SHORT_NAME=?;",
                         [suggested_short_name]
-                    )     
+                    )                       
                     result = cursor.fetchone()
                     if result == None:
                         cursor.execute(
                             " UPDATE URLS SET SHORT_NAME = (?) WHERE ID = (?) ;", [suggested_short_name, url_id]
                     )
-                        short_name = suggested_short_name
                     else:
                         short_name = convert_to_base62(url_id)
                         cursor.execute(
@@ -92,11 +99,14 @@ def encode_url():
                     print (short_name)
                     cursor.execute(
                         " UPDATE URLS SET SHORT_NAME = (?) WHERE ID = (?) ;", [short_name, url_id]
-                    )           
+                    )
+                             
             except sqlite3.Error as e:
                 print (e)
-            
-            return (jsonify({"short_url":"http://127.0.0.1:5000/{}".format(short_name)}))
+            if suggested_short_name is not None:
+                short_name = suggested_short_name  
+            data = {"short_url":"http://127.0.0.1:5000/{}".format(short_name)}
+            return response_ok(data)
     else:
         return response_error("Please enter a valid URL!",error="Invalid URL", error_code=400)
 
